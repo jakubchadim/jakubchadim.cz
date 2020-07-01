@@ -28,7 +28,8 @@ export const theme = {
     small: '0.3rem'
   },
   font: {
-    primary: 'helvetica, sans-serif'
+    primary: 'helvetica, sans-serif',
+    secondary: 'bookman, serif'
   },
   fontSize: {
     text1: '1rem',
@@ -55,7 +56,7 @@ export const GlobalStyle = createGlobalStyle`
   html, body {
     margin: 0;
     height: 100%;
-    color: ${theme.color.black1};
+    color: ${theme.color.white1};
     font-family: ${theme.font.primary};
     scroll-behavior: smooth;
   }
@@ -76,4 +77,43 @@ export const GlobalStyle = createGlobalStyle`
     font-size: ${theme.fontSize.text4};
     line-height: 1.4;
   }
+  
+  h1, h2, h3, h4, h5 {
+    font-family: ${theme.font.secondary};
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    margin: 0 0 5rem;
+    
+    ${(p) => p.theme.media.sm.up} {
+      font-size: 5.5rem;
+    margin: 0 0 10rem;
+      }
+  }
+  
+  h2 {
+  font-size: 1.4rem;
+  margin: 4rem 0 .5rem;
+        letter-spacing: .3rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        opacity: .5;
+        
+        ${(p) => p.theme.media.sm.up} {
+      font-size: 1.6rem;
+      }
+  }
+
+
+      //@media screen and (max-width: 650px) {
+      //  .title {
+      //    font-size: 1.4rem;
+      //  }
+      //
+      //  .title--big {
+      //    font-size: 2.5rem;
+      //    margin: 0 0 5rem;
+      //  }
+      //}
 `

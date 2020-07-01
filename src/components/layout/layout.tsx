@@ -29,7 +29,7 @@ const LayoutOuter = styled.div<{ image: Base64 }>`
 
 const LayoutInner = styled.div`
   position: relative;
-  max-width: 60rem;
+  max-width: 65rem;
   z-index: 1;
   padding: 2rem;
 `
