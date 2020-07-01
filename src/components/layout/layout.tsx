@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { GlobalStyle } from '../../theme/theme'
 import { Base64 } from '../../types'
 import { useLayoutQuery } from './layout.query'
 
@@ -38,9 +39,12 @@ const Layout: React.FC = ({ children }) => {
   const { file } = useLayoutQuery()
 
   return (
-    <LayoutOuter image={file.childImageSharp.fluid.base64}>
-      <LayoutInner>{children}</LayoutInner>
-    </LayoutOuter>
+    <>
+      <GlobalStyle />
+      <LayoutOuter image={file.childImageSharp.fluid.base64}>
+        <LayoutInner>{children}</LayoutInner>
+      </LayoutOuter>
+    </>
   )
 }
 
