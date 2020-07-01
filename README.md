@@ -1,0 +1,2 @@
+# jakubchadim.cz
+Static website
