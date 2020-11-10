@@ -14,7 +14,7 @@ const HomePage: React.FC = () => (
     <Content>Oddin, RTSmunity, bPromotion, Rency, Pixelmate</Content>
 
     <h2>Using</h2>
-    <Content>React, TypeScript, GraphQL, Electron, Nette, GIT, Docker</Content>
+    <Content>React, TypeScript, GraphQL, Electron, Nette, GIT, Docker, AWS</Content>
 
     <h2>Worked on</h2>
     <Content>
