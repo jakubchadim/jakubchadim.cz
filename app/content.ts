@@ -1,21 +1,22 @@
 export const profile = {
   name: 'Jakub Chadim',
   role: 'Product engineer & founder',
-  location: 'Prague, Czech Republic',
+  location: 'Kostelec nad Orlicí, Czech Republic',
+  city: 'Kostelec nad Orlicí',
   email: 'ja@jakubchadim.cz',
   linkedin: 'https://www.linkedin.com/in/jakub-chadim-bb58847b/',
   github: 'https://github.com/jakubchadim',
   cv: '/documents/cv_chadim.pdf',
-  photo: '/jakub_chadim.jpg',
+  photo: '/jakub_3day.jpg',
 }
 
 export const headline = {
   title: 'I turn ideas into products people actually use.',
-  lead: '15 years of shipping software. First developer at a company that grew from zero to $31M ARR, co-founder of two SaaS products. Now working toward my own venture-scale company.',
+  lead: '15 years of shipping software. Founding frontend engineer at a company that grew from zero to $31M ARR, co-founder of two SaaS products. Now working toward my own venture-scale company.',
 }
 
 export const metrics = [
-  { value: '$31M', label: 'ARR at Oddin.gg, built from day one' },
+  { value: '$31M', label: 'ARR at Oddin.gg, where I owned the frontend from day one' },
   { value: '300+', label: 'operators running products I built' },
   { value: '30+', label: 'languages in a B2C app used daily' },
   { value: '100k+', label: 'schemas deployed by my SaaS' },
@@ -49,10 +50,12 @@ export const work = [
   {
     name: 'Oddin.gg',
     url: 'https://oddin.gg',
-    role: 'First developer → Product Architect',
+    role: 'Founding Frontend Engineer → Product Architect',
     period: '2019 – 2025',
+    year: '2019',
+    kicker: '$31M ARR',
     summary:
-      'Joined at inception and owned the frontend of the flagship products from idea to production while the company scaled to $31M ARR and a $95M valuation. Deloitte Fast 50 winner two years in a row.',
+      'One of three founding engineers and the only one on frontend. Took the flagship products from idea to production while the company scaled to $31M ARR and a $95M valuation. Deloitte Fast 50 winner two years in a row.',
     points: [
       'Solely designed and built the trading platform — GraphQL schema, flows, UX and UI — processing billions of EUR. Rated by traders as the best tool they had used.',
       'Delivered the B2C betting app solo, then led its redesign into a tokenized design system that operators customize through configuration.',
@@ -64,6 +67,8 @@ export const work = [
     url: 'https://www.schemaflow.app',
     role: 'Co-founder',
     period: '2024 – now',
+    year: '2024',
+    kicker: '1,950+ users',
     summary:
       'Webflow app for structured data that became a Top 3 SEO app in its category — 1,950+ active users and 100k+ schemas deployed.',
     points: [
@@ -76,6 +81,8 @@ export const work = [
     url: null,
     role: 'Frontend Developer',
     period: '2017 – 2019',
+    year: '2017',
+    kicker: 'market makers',
     summary:
       'Mission-critical back-office trading application. Designed and built a new trading tool for market makers end to end.',
     points: [],
@@ -85,6 +92,8 @@ export const work = [
     url: null,
     role: 'Web Developer',
     period: '2013 – 2016',
+    year: '2013',
+    kicker: 'the beginning',
     summary:
       'Websites and platforms for agencies and design studios — from pixel-perfect frontends to PHP backends.',
     points: [],

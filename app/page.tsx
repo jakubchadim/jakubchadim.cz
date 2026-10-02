@@ -1,184 +1,183 @@
-import { headline, metrics, next, now, principles, profile, stack, work } from './content'
+import { PersonJsonLd, Pill, SpeedPill } from './_shared/brand'
+import { CountUp, Reveal } from './_shared/motion'
+import { metrics, next, now, principles, profile, stack, work } from './content'
+import { EmberHero } from './_shared/hero'
 
-const personJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: profile.name,
-  url: 'https://jakubchadim.cz',
-  image: `https://jakubchadim.cz${profile.photo}`,
-  email: `mailto:${profile.email}`,
-  jobTitle: profile.role,
-  address: { '@type': 'PostalAddress', addressLocality: 'Prague', addressCountry: 'CZ' },
-  worksFor: now.map((n) => ({ '@type': 'Organization', name: n.name, url: n.url })),
-  alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of Hradec Králové' },
-  knowsAbout: ['Product engineering', 'React', 'TypeScript', 'GraphQL', 'Structured data', 'AI'],
-  sameAs: [profile.linkedin, profile.github],
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <h2 className='mb-8 font-mono text-muted text-xs uppercase tracking-[0.2em]'>{children}</h2>
-}
-
-function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+function Label({ children }: { children: React.ReactNode }) {
   return (
-    <a
-      href={href}
-      target='_blank'
-      rel='noreferrer'
-      className='underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent'
-    >
+    <h2 className='mb-10 flex items-center gap-3 text-mist text-sm uppercase tracking-[0.18em]'>
+      <SpeedPill className='h-2.5 w-7' />
       {children}
-    </a>
+    </h2>
   )
 }
 
 export default function Home() {
   return (
-    <main className='mx-auto max-w-4xl px-5 sm:px-8'>
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+    <main className='overflow-x-clip bg-ink text-fog'>
+      <PersonJsonLd />
+      <EmberHero />
 
-      <header className='flex items-center justify-between py-8 font-mono text-sm'>
-        <span>jakubchadim.cz</span>
-        <a href={`mailto:${profile.email}`} className='text-muted transition-colors hover:text-accent'>
-          {profile.email}
-        </a>
-      </header>
-
-      {/* Hero */}
-      <section className='pt-16 pb-20 sm:pt-28'>
-        <div className='mb-10 flex items-center gap-4'>
-          <img
-            src={profile.photo}
-            alt={profile.name}
-            width={56}
-            height={56}
-            className='size-14 rounded-full object-cover object-top'
-          />
-          <div>
-            <p className='font-medium'>{profile.name}</p>
-            <p className='text-muted text-sm'>
-              {profile.role} · {profile.location}
+      <div className='mx-auto max-w-6xl px-5 sm:px-10'>
+        {/* Statement */}
+        <section className='py-28 sm:py-40'>
+          <Reveal>
+            <p className='max-w-4xl text-[clamp(1.6rem,3.6vw,2.9rem)] text-fog leading-[1.25] tracking-[-0.015em]'>
+              Founding frontend engineer at the <span className='accent'>fastest-growing</span> tech company in Central
+              Europe. Scaled the product from zero to <span className='accent'>$31M ARR</span> and a $95M
+              valuation. Now building toward my own <span className='accent accent-brand'>venture-scale</span>{' '}
+              company.
             </p>
-          </div>
-        </div>
-        <h1 className='max-w-3xl font-semibold text-4xl leading-[1.05] tracking-tight sm:text-6xl'>
-          {headline.title}
-        </h1>
-        <p className='mt-8 max-w-2xl text-lg text-muted leading-relaxed sm:text-xl'>{headline.lead}</p>
-        <div className='mt-10 flex flex-wrap gap-3'>
-          <a
-            href={`mailto:${profile.email}`}
-            className='rounded-full bg-accent px-5 py-2.5 font-medium text-bg transition-opacity hover:opacity-90'
-          >
-            Get in touch
-          </a>
-          <a
-            href={profile.cv}
-            target='_blank'
-            rel='noreferrer'
-            className='rounded-full border border-line px-5 py-2.5 transition-colors hover:border-fg'
-          >
-            Download CV
-          </a>
-        </div>
-      </section>
+          </Reveal>
+        </section>
 
-      {/* Metrics */}
-      <section className='grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4'>
-        {metrics.map((m) => (
-          <div key={m.value} className='bg-bg p-5 sm:p-6'>
-            <p className='font-semibold text-3xl tracking-tight sm:text-4xl'>{m.value}</p>
-            <p className='mt-2 text-muted text-sm leading-snug'>{m.label}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* Now */}
-      <section className='pt-24'>
-        <SectionLabel>Now</SectionLabel>
-        <div className='grid gap-4 sm:grid-cols-3'>
-          {now.map((n) => (
-            <a
-              key={n.name}
-              href={n.url}
-              target='_blank'
-              rel='noreferrer'
-              className='group rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-accent'
+        {/* Metrics */}
+        <section className='grid grid-cols-2 border-white/10 border-t lg:grid-cols-4'>
+          {metrics.map((m, i) => (
+            <Reveal
+              key={m.value}
+              delay={i * 90}
+              className='border-white/10 border-b py-10 pr-6 odd:border-r lg:border-r lg:last:border-r-0 lg:[&:not(:first-child)]:pl-8'
             >
-              <div className='flex items-baseline justify-between gap-2'>
-                <p className='font-semibold group-hover:text-accent'>{n.name} ↗</p>
-                {n.since && <p className='font-mono text-muted text-xs'>{n.since}</p>}
-              </div>
-              <p className='mt-1 text-sm'>{n.role}</p>
-              <p className='mt-4 text-muted text-sm leading-relaxed'>{n.text}</p>
-            </a>
+              <p className='font-medium text-[clamp(2.4rem,5vw,4.2rem)] text-white leading-none tracking-[-0.04em]'>
+                <CountUp value={m.value} />
+              </p>
+              <p className='mt-4 font-serif text-lg text-mist italic leading-snug'>{m.label}</p>
+            </Reveal>
           ))}
-        </div>
-      </section>
+        </section>
 
-      {/* Track record */}
-      <section className='pt-24'>
-        <SectionLabel>Track record</SectionLabel>
-        <ol className='divide-y divide-line border-line border-y'>
-          {work.map((w) => (
-            <li key={w.name} className='grid gap-2 py-8 sm:grid-cols-[10rem_1fr] sm:gap-8'>
-              <p className='font-mono text-muted text-sm'>{w.period}</p>
-              <div>
-                <p className='font-semibold text-xl'>
-                  {w.url ? <ExternalLink href={w.url}>{w.name}</ExternalLink> : w.name}
-                  <span className='font-normal text-muted'> — {w.role}</span>
-                </p>
-                <p className='mt-3 max-w-2xl leading-relaxed'>{w.summary}</p>
-                {w.points.length > 0 && (
-                  <ul className='mt-4 max-w-2xl space-y-2 text-muted'>
-                    {w.points.map((p) => (
-                      <li key={p} className='relative pl-5 leading-relaxed'>
-                        <span className='absolute left-0 text-accent'>›</span>
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+        {/* Now */}
+        <section className='pt-32'>
+          <Label>Now</Label>
+          <ol>
+            {now.map((n, i) => (
+              <Reveal as='li' key={n.name} delay={i * 80}>
+                <a
+                  href={n.url}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='group grid gap-3 border-white/10 border-b py-8 sm:grid-cols-[4rem_1fr_auto] sm:items-baseline sm:gap-8'
+                >
+                  <span className='font-medium text-2xl text-brand-soft'>0{i + 1}</span>
+                  <div>
+                    <p className='font-medium text-3xl text-white uppercase tracking-tight transition-colors group-hover:text-brand-soft'>
+                      {n.name}
+                    </p>
+                    <p className='mt-2 max-w-xl text-mist'>{n.text}</p>
+                    <p className='mt-2 font-serif text-lg italic'>{n.role.toLowerCase()}</p>
+                  </div>
+                  <span className='text-2xl text-mist transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white'>
+                    ↗
+                  </span>
+                </a>
+              </Reveal>
+            ))}
+          </ol>
+        </section>
 
-      {/* How I build */}
-      <section className='pt-24'>
-        <SectionLabel>How I build</SectionLabel>
-        <div className='grid gap-8 sm:grid-cols-3'>
-          {principles.map((p, i) => (
-            <div key={p.title}>
-              <p className='font-mono text-accent text-sm'>0{i + 1}</p>
-              <p className='mt-2 font-semibold text-lg'>{p.title}</p>
-              <p className='mt-2 text-muted leading-relaxed'>{p.text}</p>
-            </div>
-          ))}
-        </div>
-        <p className='mt-12 font-mono text-muted text-sm leading-relaxed'>{stack}</p>
-      </section>
+        {/* Track record */}
+        <section className='pt-32'>
+          <Label>Track record</Label>
+          <ol className='space-y-4'>
+            {work.map((w, i) => (
+              <Reveal as='li' key={w.name} delay={i * 60}>
+                <article className='group relative overflow-hidden rounded-3xl border border-white/10 bg-ink-2/40 p-7 transition-colors duration-500 hover:border-brand/40 sm:p-10'>
+                  <div className='-z-0 pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,#ff3f2e33,transparent_60%)] opacity-0 transition-opacity duration-700 group-hover:opacity-100' />
+                  <div className='relative grid gap-6 lg:grid-cols-[1fr_1.4fr]'>
+                    <div>
+                      <div className='flex flex-wrap items-center gap-2 text-mist'>
+                        <Pill>{w.period}</Pill>
+                        <Pill>{w.role}</Pill>
+                      </div>
+                      <h3 className='mt-6 font-medium text-4xl text-white uppercase tracking-tight sm:text-5xl'>
+                        {w.url ? (
+                          <a href={w.url} target='_blank' rel='noreferrer' className='hover:text-brand-soft'>
+                            {w.name}
+                          </a>
+                        ) : (
+                          w.name
+                        )}
+                      </h3>
+                      <p className='accent accent-brand mt-3 inline-block text-2xl'>{w.kicker}</p>
+                    </div>
+                    <div>
+                      <p className='text-fog text-lg leading-relaxed'>{w.summary}</p>
+                      {w.points.length > 0 && (
+                        <ul className='mt-5 space-y-3 text-mist'>
+                          {w.points.map((p) => (
+                            <li key={p} className='flex gap-3 leading-relaxed'>
+                              <span className='mt-2.5 h-px w-4 shrink-0 bg-brand' />
+                              {p}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </ol>
+        </section>
 
-      {/* Next */}
-      <section className='py-24'>
-        <div className='rounded-3xl border border-line bg-surface p-8 sm:p-12'>
-          <SectionLabel>{next.title}</SectionLabel>
-          <p className='max-w-2xl text-xl leading-relaxed sm:text-2xl'>{next.text}</p>
-          <div className='mt-10 flex flex-wrap gap-x-8 gap-y-3 font-mono text-sm'>
-            <a href={`mailto:${profile.email}`} className='text-accent hover:underline'>
-              {profile.email}
-            </a>
-            <ExternalLink href={profile.linkedin}>LinkedIn</ExternalLink>
-            <ExternalLink href={profile.github}>GitHub</ExternalLink>
-            <ExternalLink href={profile.cv}>CV (PDF)</ExternalLink>
+        {/* Principles */}
+        <section className='pt-32'>
+          <Label>How I build</Label>
+          <div className='grid gap-10 md:grid-cols-3'>
+            {principles.map((p, i) => (
+              <Reveal key={p.title} delay={i * 100}>
+                <p className='font-medium text-2xl text-brand-soft'>0{i + 1}</p>
+                <p className='mt-3 font-medium text-2xl text-white uppercase tracking-tight'>{p.title}</p>
+                <p className='mt-3 text-mist leading-relaxed'>{p.text}</p>
+              </Reveal>
+            ))}
           </div>
-        </div>
-      </section>
+          <p className='mt-16 font-mono text-slate text-xs uppercase leading-loose tracking-[0.18em]'>{stack}</p>
+        </section>
+      </div>
 
-      <footer className='border-line border-t py-8 font-mono text-muted text-xs'>
-        © {new Date().getFullYear()} {profile.name} · {profile.location}
-      </footer>
+      {/* CTA */}
+      <section className='grain relative mt-32 overflow-hidden'>
+        <div className='-z-0 absolute inset-0 bg-[radial-gradient(80%_70%_at_50%_100%,#ff3f2e88,#b30f0044_45%,transparent_75%)]' />
+        <div className='relative mx-auto max-w-6xl px-5 py-32 sm:px-10 sm:py-44'>
+          <Reveal>
+            <Label>{next.title}</Label>
+            <p className='max-w-4xl font-medium text-[clamp(2.4rem,7vw,6rem)] text-white leading-[0.98] tracking-[-0.035em]'>
+              Let’s build something <span className='accent'>big.</span>
+            </p>
+            <p className='mt-8 max-w-2xl text-fog text-lg leading-relaxed'>{next.text}</p>
+            <div className='mt-12 flex flex-wrap items-center gap-4'>
+              <a
+                href={`mailto:${profile.email}`}
+                className='rounded-2xl bg-white px-6 py-4 font-medium text-ink transition-transform hover:-translate-y-0.5'
+              >
+                {profile.email}
+              </a>
+              <a
+                href={profile.linkedin}
+                target='_blank'
+                rel='noreferrer'
+                className='rounded-2xl border border-white/20 px-6 py-4 transition-colors hover:border-white'
+              >
+                LinkedIn
+              </a>
+              <a
+                href={profile.cv}
+                target='_blank'
+                rel='noreferrer'
+                className='rounded-2xl border border-white/20 px-6 py-4 transition-colors hover:border-white'
+              >
+                CV.pdf
+              </a>
+            </div>
+          </Reveal>
+        </div>
+        <footer className='relative mx-auto flex max-w-6xl justify-between px-5 pb-10 font-mono text-mist text-xs uppercase tracking-[0.18em] sm:px-10'>
+          <span>© {new Date().getFullYear()} {profile.name}</span>
+          <span>{profile.location}</span>
+        </footer>
+      </section>
     </main>
   )
 }
