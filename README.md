@@ -1,8 +1,9 @@
 # jakubchadim.cz
-Static website
 
-## Run ##
+Personal website. Next.js (static export) + Tailwind CSS, hosted on GitHub Pages.
 
-1. `npm install` or `yarn install`
-2. `npm run develop`
-3. Open site in browser [localhost:8000](localhost:8000)
+- `pnpm dev` — dev server on [localhost:3000](http://localhost:3000)
+- `pnpm build` — static export to `out/`
+- `pnpm deploy` — build and publish `out/` to the `gh-pages` branch
+
+Content lives in `app/content.ts`.
