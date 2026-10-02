@@ -1,4 +1,4 @@
-import { PersonJsonLd, Pill, SpeedPill } from './_shared/brand'
+import { PersonJsonLd, Pill } from './_shared/brand'
 import { CountUp, Reveal } from './_shared/motion'
 import { metrics, next, now, principles, profile, stack, work } from './content'
 import { EmberHero } from './_shared/hero'
@@ -6,7 +6,7 @@ import { EmberHero } from './_shared/hero'
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <h2 className='mb-10 flex items-center gap-3 text-mist text-sm uppercase tracking-[0.18em]'>
-      <SpeedPill className='h-2.5 w-7' />
+      <span aria-hidden className='h-px w-8 bg-brand' />
       {children}
     </h2>
   )

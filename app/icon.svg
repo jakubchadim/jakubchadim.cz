@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="7" fill="#101d22"/>
-  <clipPath id="pill"><rect x="5" y="9.5" width="22" height="13" rx="6.5"/></clipPath>
-  <g clip-path="url(#pill)" fill="#ff3f2e">
-    <rect x="5" y="9.5" width="22" height="2.8"/>
-    <rect x="5" y="14.6" width="22" height="2.8"/>
-    <rect x="5" y="19.7" width="22" height="2.8"/>
-  </g>
+  <text x="4.5" y="22" fill="#ffffff" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="-0.6">JC</text>
+  <circle cx="26" cy="20.6" r="2" fill="#ff3f2e"/>
 </svg>

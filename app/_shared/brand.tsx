@@ -1,18 +1,11 @@
 import Link from 'next/link'
 import { headline, now, profile, siteUrl } from '../content'
 
-/** Pill of horizontal speed lines, as in the 3DAY.STUDIO wordmark. */
-export function SpeedPill({ className = '' }: { className?: string }) {
-  return <span aria-hidden className={`speed-lines inline-block rounded-full ${className}`} />
-}
-
-/** "JAKUB ≡ CHADIM" wordmark echoing "3DAY ≡ STUDIO". */
+/** Plain name wordmark. */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
-    <Link href='/' className={`inline-flex items-center gap-1.5 font-bold tracking-tight ${className}`}>
-      JAKUB
-      <SpeedPill className='h-[0.8em] w-[2.2em]' />
-      CHADIM
+    <Link href='/' className={`font-medium tracking-tight ${className}`}>
+      Jakub Chadim
     </Link>
   )
 }

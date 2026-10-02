@@ -38,24 +38,8 @@ export async function GET() {
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 28, fontWeight: 700, color: 'white' }}>
-          JAKUB
-          <div
-            style={{
-              width: 62,
-              height: 24,
-              borderRadius: 12,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ height: 3, background: '#ff3f2e' }} />
-            ))}
-          </div>
-          CHADIM
+        <div style={{ display: 'flex', fontSize: 30, fontWeight: 500, letterSpacing: -0.5, color: 'white' }}>
+          Jakub Chadim
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>

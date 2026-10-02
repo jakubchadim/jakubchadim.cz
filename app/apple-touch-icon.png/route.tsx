@@ -13,23 +13,14 @@ export function GET() {
         alignItems: 'center',
         justifyContent: 'center',
         background: '#101d22',
+        color: 'white',
+        fontSize: 92,
+        fontWeight: 700,
+        letterSpacing: -4,
       }}
     >
-      <div
-        style={{
-          width: 124,
-          height: 74,
-          borderRadius: 37,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}
-      >
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{ height: 16, background: '#ff3f2e' }} />
-        ))}
-      </div>
+      JC
+      <div style={{ width: 18, height: 18, borderRadius: 9, background: '#ff3f2e', marginLeft: 6, marginTop: 44 }} />
     </div>,
     { width: 180, height: 180 },
   )

@@ -18,20 +18,8 @@
   --color-brand-deep: #b30f00;
   --color-brand-night: #4d0600;
 
-  --animate-marquee: marquee 40s linear infinite;
-  --animate-stripes: stripes 1.2s linear infinite;
   --animate-drift: drift 9s ease-in-out infinite alternate;
 
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  @keyframes stripes {
-    to {
-      background-position: 0 -12px;
-    }
-  }
   @keyframes drift {
     from {
       transform: translate3d(-4%, -2%, 0) scale(1);
@@ -67,15 +55,6 @@ html {
 .accent-brand {
   color: var(--color-brand-soft);
   text-decoration-color: color-mix(in oklab, var(--color-brand) 70%, transparent);
-}
-
-/* The horizontal "speed lines" from the 3DAY.STUDIO logo */
-.speed-lines {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--color-brand) 0 3px,
-    transparent 3px 6px
-  );
 }
 
 /* Film grain */
