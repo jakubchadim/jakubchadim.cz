@@ -57,14 +57,24 @@ export function EmberHero() {
         className='-z-10 absolute inset-y-0 right-0 h-full w-full object-cover object-[50%_25%] opacity-55 mix-blend-lighten [mask-image:linear-gradient(to_bottom,black_30%,transparent_85%)] md:w-[60%] md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent,black_40%)]'
       />
 
-      <header className='flex items-center justify-between px-5 py-6 sm:px-10'>
-        <Wordmark className='text-fog text-lg' />
-        <a
-          href={`mailto:${profile.email}`}
-          className='rounded-xl border border-white/10 bg-ink-2/70 px-4 py-2 text-sm backdrop-blur transition-colors hover:border-brand hover:text-white'
-        >
-          Let’s talk ↗
-        </a>
+      <header className='flex items-center justify-between gap-4 px-5 py-6 sm:px-10'>
+        <Wordmark className='text-white text-xl sm:text-3xl' />
+        <nav className='flex items-center gap-2 text-sm'>
+          <a
+            href='https://3day.studio'
+            target='_blank'
+            rel='noreferrer'
+            className='rounded-xl border border-white/10 px-3 py-2 backdrop-blur transition-colors hover:border-white/30 hover:text-white sm:px-4'
+          >
+            3day.studio ↗
+          </a>
+          <a
+            href={`mailto:${profile.email}`}
+            className='rounded-xl border border-white/10 bg-ink-2/70 px-3 py-2 backdrop-blur transition-colors hover:border-brand hover:text-white sm:px-4'
+          >
+            Let’s talk ↗
+          </a>
+        </nav>
       </header>
 
       <div className='mt-auto px-5 pb-10 sm:px-10 sm:pb-16'>
