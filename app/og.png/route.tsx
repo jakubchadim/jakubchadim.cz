@@ -10,6 +10,7 @@ export const dynamic = 'force-static'
 export async function GET() {
   const photo = await readFile(join(process.cwd(), 'public', profile.photo))
   const src = `data:image/jpeg;base64,${photo.toString('base64')}`
+  const sun = await readFile(join(process.cwd(), 'public/brand/3day-sun.svg'))
 
   return new ImageResponse(
     <div style={{ width: '100%', height: '100%', display: 'flex', background: '#101d22', color: '#d8e7ec' }}>
@@ -38,8 +39,16 @@ export async function GET() {
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 30, fontWeight: 500, letterSpacing: -0.5, color: 'white' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: 32, fontWeight: 700, letterSpacing: -0.8, color: 'white' }}>
           Jakub Chadim
+          {/* biome-ignore lint/performance/noImgElement: satori */}
+          <img
+            src={`data:image/svg+xml;base64,${sun.toString('base64')}`}
+            alt=''
+            width={12}
+            height={12}
+            style={{ marginLeft: 3, marginBottom: 7 }}
+          />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>

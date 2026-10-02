@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { headline, now, profile, siteUrl } from '../content'
 
-/** Plain name wordmark. */
+/** Bold name ending in the 3DAY.STUDIO favicon dot (public/brand/3day-sun.svg, unmodified). */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
-    <Link href='/' className={`font-medium tracking-tight ${className}`}>
+    <Link href='/' className={`inline-flex items-baseline font-bold tracking-[-0.025em] ${className}`}>
       Jakub Chadim
+      <img src='/brand/3day-sun.svg' alt='' className='ml-[0.1em] h-[0.36em] w-auto' />
     </Link>
   )
 }

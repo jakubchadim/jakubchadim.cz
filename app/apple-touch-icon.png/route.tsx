@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ImageResponse } from 'next/og'
 
 // Served as /apple-touch-icon.png; see app/og.png/route.tsx for why this isn't apple-icon.tsx.
 export const dynamic = 'force-static'
 
-export function GET() {
+export async function GET() {
+  const sun = await readFile(join(process.cwd(), 'public/brand/3day-sun.svg'))
   return new ImageResponse(
     <div
       style={{
@@ -20,7 +23,14 @@ export function GET() {
       }}
     >
       JC
-      <div style={{ width: 18, height: 18, borderRadius: 9, background: '#ff3f2e', marginLeft: 6, marginTop: 44 }} />
+      {/* biome-ignore lint/performance/noImgElement: satori */}
+      <img
+        src={`data:image/svg+xml;base64,${sun.toString('base64')}`}
+        alt=''
+        width={30}
+        height={30}
+        style={{ marginLeft: 6, marginTop: 40 }}
+      />
     </div>,
     { width: 180, height: 180 },
   )
