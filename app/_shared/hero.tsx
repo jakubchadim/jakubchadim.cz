@@ -58,7 +58,7 @@ export function EmberHero() {
       />
 
       <header className='flex items-center justify-between gap-4 px-5 py-6 sm:px-10'>
-        <Wordmark className='text-white text-xl sm:text-3xl' />
+        <Wordmark className='h-4 sm:h-[22px]' />
         <nav className='flex items-center gap-2 text-sm'>
           <a
             href='https://3day.studio'

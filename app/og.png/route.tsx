@@ -10,11 +10,8 @@ export const dynamic = 'force-static'
 export async function GET() {
   const photo = await readFile(join(process.cwd(), 'public', profile.photo))
   const src = `data:image/jpeg;base64,${photo.toString('base64')}`
-  const sun = await readFile(join(process.cwd(), 'public/brand/3day-sun.svg'))
-  const [interMedium, interBold] = await Promise.all([
-    readFile(join(process.cwd(), 'assets/fonts/Inter-Medium.ttf')),
-    readFile(join(process.cwd(), 'assets/fonts/Inter-Bold.ttf')),
-  ])
+  const logo = await readFile(join(process.cwd(), 'public/brand/jakub-chadim-logo-white.svg'))
+  const interMedium = await readFile(join(process.cwd(), 'assets/fonts/Inter-Medium.ttf'))
 
   return new ImageResponse(
     <div
@@ -53,19 +50,8 @@ export async function GET() {
           justifyContent: 'space-between',
         }}
       >
-        <div
-          style={{ display: 'flex', alignItems: 'flex-end', fontSize: 40, fontWeight: 700, letterSpacing: -1, color: 'white' }}
-        >
-          Jakub Chadim
-          {/* biome-ignore lint/performance/noImgElement: satori */}
-          <img
-            src={`data:image/svg+xml;base64,${sun.toString('base64')}`}
-            alt=''
-            width={14}
-            height={14}
-            style={{ marginLeft: 4, marginBottom: 9 }}
-          />
-        </div>
+        {/* biome-ignore lint/performance/noImgElement: satori */}
+        <img src={`data:image/svg+xml;base64,${logo.toString('base64')}`} alt='' width={271} height={30} />
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 70, lineHeight: 1.04, letterSpacing: -2.5, color: 'white' }}>Product engineer.</div>
@@ -84,7 +70,6 @@ export async function GET() {
       height: 630,
       fonts: [
         { name: 'Inter', data: interMedium, weight: 500, style: 'normal' },
-        { name: 'Inter', data: interBold, weight: 700, style: 'normal' },
       ],
     },
   )

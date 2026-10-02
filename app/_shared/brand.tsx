@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { headline, now, profile, siteUrl } from '../content'
 
-/** Bold name ending in the 3DAY.STUDIO favicon dot (public/brand/3day-sun.svg, unmodified). */
+/**
+ * Name logo: outlined Inter Display Bold + the 3DAY.STUDIO favicon dot, one SVG
+ * (public/brand, built by scripts/build-logo.py) so it matches every other use.
+ */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
-    <Link href='/' className={`inline-flex items-baseline font-bold tracking-[-0.025em] ${className}`}>
-      Jakub Chadim
-      <img src='/brand/3day-sun.svg' alt='' className='ml-[0.1em] h-[0.36em] w-auto' />
+    <Link href='/' className={`inline-block ${className}`}>
+      <img src='/brand/jakub-chadim-logo-white.svg' alt={profile.name} className='h-full w-auto' />
     </Link>
   )
 }
