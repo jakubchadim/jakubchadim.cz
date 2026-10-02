@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { now, profile } from '../content'
+import { headline, now, profile, siteUrl } from '../content'
 
 /** Pill of horizontal speed lines, as in the 3DAY.STUDIO wordmark. */
 export function SpeedPill({ className = '' }: { className?: string }) {
@@ -18,22 +18,42 @@ export function Wordmark({ className = '' }: { className?: string }) {
 }
 
 export function PersonJsonLd() {
-  const data = {
-    '@context': 'https://schema.org',
+  const person = {
     '@type': 'Person',
+    '@id': `${siteUrl}/#person`,
     name: profile.name,
-    url: 'https://jakubchadim.cz',
-    image: `https://jakubchadim.cz${profile.photo}`,
+    givenName: 'Jakub',
+    familyName: 'Chadim',
+    url: siteUrl,
+    image: `${siteUrl}${profile.photo}`,
     email: `mailto:${profile.email}`,
     jobTitle: profile.role,
+    description: headline.lead,
     homeLocation: {
       '@type': 'Place',
+      name: profile.city,
       address: { '@type': 'PostalAddress', addressLocality: profile.city, addressCountry: 'CZ' },
     },
     worksFor: now.map((n) => ({ '@type': 'Organization', name: n.name, url: n.url })),
     alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of Hradec Králové' },
-    knowsAbout: ['Product engineering', 'React', 'TypeScript', 'GraphQL', 'Structured data', 'AI'],
-    sameAs: [profile.linkedin, profile.github],
+    knowsAbout: ['Product engineering', 'Frontend architecture', 'React', 'TypeScript', 'GraphQL', 'Structured data', 'AI'],
+    knowsLanguage: ['cs', 'en'],
+    sameAs: [profile.linkedin, profile.github, 'https://3day.studio'],
+  }
+  const data = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'ProfilePage',
+        '@id': `${siteUrl}/#profilepage`,
+        url: siteUrl,
+        name: `${profile.name} — ${profile.role}`,
+        inLanguage: 'en',
+        dateModified: new Date().toISOString().slice(0, 10),
+        mainEntity: { '@id': `${siteUrl}/#person` },
+      },
+      person,
+    ],
   }
   // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD
   return <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />

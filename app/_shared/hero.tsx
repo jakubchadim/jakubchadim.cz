@@ -52,7 +52,8 @@ export function EmberHero() {
       {/* Portrait */}
       <img
         src={profile.photo}
-        alt={profile.name}
+        alt={`${profile.name}, portrait`}
+        fetchPriority='high'
         className='-z-10 absolute inset-y-0 right-0 h-full w-full object-cover object-[50%_25%] opacity-55 mix-blend-lighten [mask-image:linear-gradient(to_bottom,black_30%,transparent_85%)] md:w-[60%] md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent,black_40%)]'
       />
 

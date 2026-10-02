@@ -1,3 +1,5 @@
+export const siteUrl = 'https://jakubchadim.cz'
+
 export const profile = {
   name: 'Jakub Chadim',
   role: 'Product engineer & founder',
