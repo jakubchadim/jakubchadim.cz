@@ -11,9 +11,23 @@ export async function GET() {
   const photo = await readFile(join(process.cwd(), 'public', profile.photo))
   const src = `data:image/jpeg;base64,${photo.toString('base64')}`
   const sun = await readFile(join(process.cwd(), 'public/brand/3day-sun.svg'))
+  const [interMedium, interBold] = await Promise.all([
+    readFile(join(process.cwd(), 'assets/fonts/Inter-Medium.ttf')),
+    readFile(join(process.cwd(), 'assets/fonts/Inter-Bold.ttf')),
+  ])
 
   return new ImageResponse(
-    <div style={{ width: '100%', height: '100%', display: 'flex', background: '#101d22', color: '#d8e7ec' }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        background: '#101d22',
+        color: '#d8e7ec',
+        fontFamily: 'Inter',
+        fontWeight: 500,
+      }}
+    >
       <div style={{ position: 'absolute', top: 0, right: 0, width: 520, height: 630, display: 'flex' }}>
         {/* biome-ignore lint/performance/noImgElement: satori */}
         <img src={src} alt='' width={520} height={630} style={{ objectFit: 'cover', objectPosition: '50% 25%' }} />
@@ -39,15 +53,17 @@ export async function GET() {
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: 32, fontWeight: 700, letterSpacing: -0.8, color: 'white' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'flex-end', fontSize: 40, fontWeight: 700, letterSpacing: -1, color: 'white' }}
+        >
           Jakub Chadim
           {/* biome-ignore lint/performance/noImgElement: satori */}
           <img
             src={`data:image/svg+xml;base64,${sun.toString('base64')}`}
             alt=''
-            width={12}
-            height={12}
-            style={{ marginLeft: 3, marginBottom: 7 }}
+            width={14}
+            height={14}
+            style={{ marginLeft: 4, marginBottom: 9 }}
           />
         </div>
 
@@ -63,6 +79,13 @@ export async function GET() {
         <div style={{ fontSize: 20, letterSpacing: 4, color: '#6a7e86' }}>JAKUBCHADIM.CZ</div>
       </div>
     </div>,
-    { width: 1200, height: 630 },
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        { name: 'Inter', data: interMedium, weight: 500, style: 'normal' },
+        { name: 'Inter', data: interBold, weight: 700, style: 'normal' },
+      ],
+    },
   )
 }
