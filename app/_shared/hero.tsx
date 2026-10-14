@@ -57,20 +57,20 @@ export function EmberHero() {
         className='-z-10 absolute inset-y-0 right-0 h-full w-full object-cover object-[50%_25%] opacity-55 mix-blend-lighten [mask-image:linear-gradient(to_bottom,black_30%,transparent_85%)] md:w-[60%] md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent,black_40%)]'
       />
 
-      <header className='flex items-center justify-between gap-4 px-5 py-6 sm:px-10'>
-        <Wordmark className='h-4 sm:h-[22px]' />
-        <nav className='flex items-center gap-2 text-sm'>
+      <header className='flex items-center justify-between gap-3 px-5 py-6 sm:gap-4 sm:px-10'>
+        <Wordmark className='h-4 shrink-0 sm:h-[22px]' />
+        <nav className='flex shrink-0 items-center gap-1.5 text-xs sm:gap-2 sm:text-sm'>
           <a
             href='https://3day.studio'
             target='_blank'
             rel='noreferrer'
-            className='rounded-xl border border-white/10 px-3 py-2 backdrop-blur transition-colors hover:border-white/30 hover:text-white sm:px-4'
+            className='whitespace-nowrap rounded-xl border border-white/10 px-2.5 py-2 backdrop-blur max-[359px]:hidden transition-colors hover:border-white/30 hover:text-white sm:px-4'
           >
             3day.studio ↗
           </a>
           <a
             href={`mailto:${profile.email}`}
-            className='rounded-xl border border-white/10 bg-ink-2/70 px-3 py-2 backdrop-blur transition-colors hover:border-brand hover:text-white sm:px-4'
+            className='whitespace-nowrap rounded-xl border border-white/10 bg-ink-2/70 px-2.5 py-2 backdrop-blur transition-colors hover:border-brand hover:text-white sm:px-4'
           >
             Let’s talk ↗
           </a>

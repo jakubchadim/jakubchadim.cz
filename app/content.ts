@@ -40,6 +40,13 @@ export const now = [
     text: 'Crawls a whole website, generates structured data for every page with AI and keeps it in sync as content changes.',
   },
   {
+    name: 'GoatGuess',
+    url: 'https://goatguess.com',
+    role: 'Founder',
+    since: '2026',
+    text: 'Daily guessing games about players across 10 sports and esports, in 11 languages. Everyone gets the same puzzle each day, then compares scores with friends.',
+  },
+  {
     name: '3DAY.STUDIO',
     url: 'https://3day.studio',
     role: 'Engineering partner',
