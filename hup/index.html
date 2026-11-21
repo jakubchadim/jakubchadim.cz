@@ -15,7 +15,8 @@
   h1 { font-size: 19px; margin: 0 0 6px; }
   p { margin: 6px 0; color: var(--muted); font-size: 14px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  button { font: inherit; font-size: 14px; border: 1px solid rgba(127,127,127,.35); background: transparent; color: var(--fg); border-radius: 9px; padding: 7px 12px; cursor: pointer; }
+  button, select { font: inherit; font-size: 14px; border: 1px solid rgba(127,127,127,.35); background: transparent; color: var(--fg); border-radius: 9px; padding: 7px 12px; cursor: pointer; }
+  select { flex: 1; min-width: 0; background: var(--card); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; padding: 9px 16px; }
   button:disabled { opacity: .45; cursor: default; }
   details { margin-top: 8px; font-size: 14px; }
@@ -35,10 +36,17 @@
   <h1>Socha HUP – kontrola ve skutečné velikosti</h1>
   <p id="status">Načítám…</p>
   <div class="row">
-    <button class="primary" id="enter" disabled>Spustit AR (passthrough)</button>
+    <button id="prev" aria-label="Předchozí varianta">◀</button>
+    <select id="variant" aria-label="Varianta"></select>
+    <button id="next" aria-label="Další varianta">▶</button>
+  </div>
+  <div class="row">
+    <button class="primary" id="enter" disabled>Venku: AR (passthrough)</button>
+    <button class="primary" id="home" disabled>Doma: VR s fotkou</button>
+    <button id="bg">Pozadí: žádné</button>
     <button id="mat">Materiál: červená</button>
     <button id="disp">Zobrazení: plné</button>
-    <button id="mirror">Rameno: u pilíře</button>
+    <button id="mirror">Zrcadlit: ne</button>
     <button id="ghost">Současné skříně: zap</button>
   </div>
   <details>
@@ -46,16 +54,20 @@
     <ol>
       <li>Postav se na chodník před skříně. Pravým ovladačem zamiř laserem na zem.</li>
       <li><b>Bod 1:</b> hrana dlažby u levé strany pilíře (při pohledu z ulice) – zmáčkni spoušť.</li>
-      <li><b>Bod 2:</b> o 1,5–2 m dál po hraně dlažby směrem k elektroměru – spoušť. Objekt se postaví čelem na tuto čáru, rameno vede do zahrady.</li>
+      <li><b>Bod 2:</b> o 1,5–2 m dál po hraně dlažby směrem k elektroměru – spoušť. Budka se postaví čelem na tuto čáru.</li>
+      <li>Varianty: <b>pravá spoušť</b> další, <b>levá spoušť</b> předchozí.</li>
       <li>Doladění: pravá páčka posun (vlevo/vpravo, dopředu/dozadu), levá páčka otáčení a výška. Se zmáčknutým bočním tlačítkem (grip) jde posun 5× rychleji.</li>
-      <li><b>A</b> materiál, <b>B</b> plné / poloprůhledné / drátěné, <b>X</b> rameno na druhou stranu, <b>Y</b> umístit znovu. Azurové obrysy ukazují současný pilíř a skříň – když sedí na skutečné, je umístění správně.</li>
+      <li><b>A</b> materiál, <b>B</b> plné / poloprůhledné / drátěné, <b>X</b> zrcadlit, <b>Y</b> umístit znovu. Azurové obrysy ukazují současný pilíř a skříň – když sedí na skutečné, je umístění správně.</li>
+      <li>Anamorfóza dává obraz (dům) jen z jednoho místa – stoupni si ke žluté tyčce a koukej z výšky její kuličky.</li>
     </ol>
+    <p><b>Doma:</b> „Doma: VR s fotkou“ tě postaví přesně tam, kde stál foťák, a socha stojí před fotkou ve skutečné velikosti. Stůj na místě a dívej se rovně – po startu se scéna srovná podle toho, kam koukáš. <b>Klik pravou páčkou</b> přepne fotku z ulice / ze zahrady, <b>Y</b> znovu vycentruje, spouště mění varianty. Když chodíš, fotka nesedí – je to jen plochý obrázek.</p>
     <p class="warn">Nikdy nemiř čočkami helmy do slunce, ani když ji odkládáš – slunce přes čočky propálí displeje. Venku nejlépe pod mrakem nebo za šera. Quest 2 ukazuje okolí černobíle, barvu posuzuj spíš z fotek.</p>
   </details>
 </div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ---------- geometry (cm, object frame: x along the sidewalk, y into the garden, z up) ----------
 const L = 200, BOX_H = 128, TOP = 255, BACK = 185, R = 45, HALF = 15;
@@ -119,15 +131,309 @@ function boxGeometry(x0, x1, y0, y1, z0, z1) {
   return g;
 }
 
+// deterministic random, so a variant looks the same every time
+function rng(seed) {
+  return () => {
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// collects the parts of one variant; points are given unmirrored, P() applies the mirror
+class Builder {
+  constructor(mirror) {
+    this.mirror = mirror;
+    this.parts = { box: [], tube: [], rod: [], glow: [] };
+    this.lines = [];
+    this.rect(0, L, 0, 30);
+  }
+  P(x, y, z) { return v(this.mirror ? L - x : x, y, z); }
+  add(kind, g) { if (g) this.parts[kind].push(g); }
+  box() { this.add('box', boxGeometry(0, L, 0, 30, 0, BOX_H)); }
+  ball(c, r, kind = 'rod') { const g = new THREE.SphereGeometry(r, 12, 8); g.translate(c.x, c.y, c.z); this.add(kind, g); }
+  seg(a, b, r) {
+    const d = b.clone().sub(a), len = d.length();
+    if (len < 1e-6) return;
+    const g = new THREE.CylinderGeometry(r, r, len, 8, 1, true);
+    g.translate(0, len / 2, 0);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v(0, 1, 0), d.normalize()));
+    g.translate(a.x, a.y, a.z);
+    this.add('rod', g);
+  }
+  // straight bars welded at the points
+  rods(pts, r = 0.8) {
+    const P = pts.map(p => this.P(...p));
+    for (let i = 0; i < P.length - 1; i++) this.seg(P[i], P[i + 1], r);
+    P.forEach(p => this.ball(p, r));
+  }
+  // smoothly bent bar through the points
+  curve(pts, r = 0.8) {
+    const P = pts.map(p => this.P(...p));
+    const c = new THREE.CatmullRomCurve3(P, false, 'centripetal');
+    this.add('rod', new THREE.TubeGeometry(c, Math.max(24, Math.ceil(c.getLength() / 2)), r, 8, false));
+    this.ball(P[0], r); this.ball(P[P.length - 1], r);
+  }
+  ring(c, radius, n, r = 0.6) {
+    const g = new THREE.TorusGeometry(radius, r, 8, 72);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v(0, 0, 1), v(this.mirror ? -n[0] : n[0], n[1], n[2]).normalize()));
+    const C = this.P(...c);
+    g.translate(C.x, C.y, C.z);
+    this.add('rod', g);
+  }
+  line(pts) { this.lines.push(pts.map(p => this.P(...p))); }
+  rect(x0, x1, y0, y1) { this.line([[x0, y0, 0.5], [x1, y0, 0.5], [x1, y1, 0.5], [x0, y1, 0.5], [x0, y0, 0.5]]); }
+}
+
+const cubeEdges = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+const cubeCorners = s => [0, 1, 2, 3, 4, 5, 6, 7].map(i => v(i & 1 ? s : -s, i & 2 ? s : -s, i & 4 ? s : -s));
+
+// ---------- variants ----------
+const VARIANTS = [
+  { name: 'Jen budka', build(b) { b.box(); } },
+
+  { name: 'Čára – ohnutá trubka Ø 48', build(b) {
+    b.box();
+    b.curve([[186, 15, 126], [186, 15, 164], [174, 10, 194], [143, 6, 203], [126, 8, 189], [123, 12, 166], [137, 18, 157],
+      [150, 22, 167], [157, 24, 186], [136, 22, 206], [93, 16, 200], [64, 12, 183], [57, 14, 151], [57, 15, 126]], 2.4);
+  } },
+
+  { name: 'Obrys – jakl 40×40 jako kresba', build(b) {
+    b.box();
+    b.rods(filletSamples([[192, 15, 126], [192, 15, 206], [8, 15, 206], [8, 15, 126]], 14).map(s => s.p.toArray()), 2);
+  } },
+
+  { name: 'Lamely – tyče z víka', build(b) {
+    b.box();
+    for (let i = 0; i < 25; i++) { const x = 6 + i * 188 / 24; b.rods([[x, 15, 126], [x, 15, 131 + i * 3]], 1); }
+  } },
+
+  { name: 'Zlom a světlo – šikmé víko, perforace', build(b) {
+    const hz = x => BOX_H + 30 * x / L;
+    const s = new THREE.Shape([[0, 0], [L, 0], [L, hz(L)], [0, hz(0)]].map(([x, z]) => new THREE.Vector2(b.P(x, 0, 0).x, z)));
+    const g = new THREE.ExtrudeGeometry(s, { depth: 30, bevelEnabled: false });
+    g.rotateX(Math.PI / 2); g.translate(0, 30, 0);
+    b.add('box', g);
+    const rnd = rng(7);
+    for (let k = 0; k < 900; k++) {
+      const x = 6 + rnd() * (L - 12), z = 12 + rnd() * (hz(x) - 22);
+      const f = (x / L + z / hz(x)) / 2;   // denser towards the high corner
+      if (rnd() > 0.08 + 0.8 * f * f) continue;
+      const c = new THREE.CircleGeometry(0.7 + 1.8 * f, 10);
+      c.rotateX(Math.PI / 2);
+      const p = b.P(x, -0.3, z);
+      c.translate(p.x, p.y, p.z);
+      b.add('glow', c);
+    }
+  } },
+
+  { name: 'Odečítač – postava na budce', build(b) {
+    b.box();
+    b.rods([[138, 20, 132], [162, 20, 132]], 1);
+    b.rods([[140, 20, 132], [140, -12, 134], [142, -14, 90], [142, -26, 88]], 1);
+    b.rods([[160, 20, 132], [161, -12, 134], [160, -14, 92], [160, -26, 90]], 1);
+    b.rods([[150, 20, 132], [150, 22, 160], [150, 20, 184], [150, 19, 190]], 1);
+    b.rods([[134, 20, 182], [166, 20, 182]], 1);
+    b.ring([150, 18, 201], 11, [0, 1, 0], 1);
+    b.rods([[166, 20, 182], [172, 6, 160], [160, -8, 166]], 1);
+    b.rods([[150, -10, 162], [164, -10, 162], [164, -6, 178], [150, -6, 178], [150, -10, 162]], 0.6);
+    b.rods([[134, 20, 182], [128, 14, 158], [126, 14, 131]], 1);
+  } },
+
+  { name: 'Plamen a blesk', build(b) {
+    b.box();
+    b.curve([[20, 8, 126], [10, 12, 155], [28, 6, 180], [18, 10, 205], [24, 9, 218]], 0.8);
+    b.curve([[40, 15, 126], [30, 20, 160], [54, 14, 186], [42, 18, 212], [50, 15, 236]], 0.8);
+    b.curve([[60, 22, 126], [52, 24, 150], [70, 20, 172], [60, 24, 196]], 0.8);
+    b.curve([[32, 4, 126], [44, 2, 150], [36, 6, 170], [46, 4, 192]], 0.8);
+    b.rods([[150, 15, 126], [168, 15, 168], [148, 15, 173], [174, 15, 226]], 1.2);
+  } },
+
+  { name: 'Kabel, který utekl', build(b) {
+    b.box();
+    b.curve([[178, 15, 126], [190, 8, 146], [176, -2, 166], [142, 4, 172], [116, 14, 186], [105, 18, 200]], 0.8);
+    b.curve([[105, 18, 200], [92, 20, 213], [78, 22, 209], [66, 24, 198]], 0.8);
+    b.curve([[105, 18, 200], [118, 16, 213], [132, 14, 209], [144, 12, 198]], 0.8);
+  } },
+
+  { name: 'Siločáry', build(b) {
+    b.box();
+    for (const tilt of [-35, 0, 35]) {
+      const t = THREE.MathUtils.degToRad(tilt);
+      for (const [x0, x1, h] of [[8, 192, 27], [24, 176, 51], [40, 160, 72], [60, 140, 93]]) {
+        const hc = h / 0.75, pts = [];
+        for (let i = 0; i <= 16; i++) {   // cubic bezier (x0,0) (x0,hc) (x1,hc) (x1,0)
+          const s = i / 16, a = (1 - s) ** 3, bb = 3 * s * (1 - s) ** 2, c = 3 * s * s * (1 - s), d = s ** 3;
+          const x = (a + bb) * x0 + (c + d) * x1, z = (bb + c) * hc;
+          pts.push([x, 15 + Math.sin(t) * z, 127 + Math.cos(t) * z]);
+        }
+        b.curve(pts, 0.6);
+      }
+    }
+  } },
+
+  { name: 'Rozpad – budka se rozplývá', build(b) {
+    b.box();
+    const rnd = rng(11), N = 16;
+    for (let i = 0; i < N; i++) {
+      const lv = i / (N - 1), s = (20 - lv * 13) / 2;
+      const x = 12 + rnd() * 176 * (1 - lv * 0.5) + lv * 88, y = 5 + rnd() * 20, z = 128 + s * 1.8 + Math.pow(lv, 0.9) * 80;
+      const e = new THREE.Euler((rnd() - 0.5) * lv * 1.4, (rnd() - 0.5) * lv * 1.4, (rnd() - 0.5) * lv * 1.4);
+      const C = cubeCorners(s).map(p => p.applyEuler(e).add(v(x, y, z)).toArray());
+      for (const [i0, i1] of cubeEdges) b.rods([C[i0], C[i1]], 0.6);
+    }
+  } },
+
+  { name: 'Tep domu', build(b) {
+    b.box();
+    b.rods([[-12, 15, 160], [60, 15, 160], [72, 15, 180], [84, 15, 150], [100, 15, 225], [116, 15, 132], [128, 15, 170], [140, 15, 160], [212, 15, 160]], 1);
+    b.rods([[8, 15, 126], [8, 15, 160]], 1);
+    b.rods([[192, 15, 126], [192, 15, 160]], 1);
+  } },
+
+  { name: 'Hejno – ptáci letí ke stromu', build(b) {
+    b.box();
+    const sp = v(-0.742, 0.671, 0);   // wing span, across the flight towards the tree
+    for (const [x, y, z, w] of [[160, 22, 150, 18], [176, 32, 170, 22], [166, 48, 190, 26], [196, 56, 204, 30], [186, 76, 220, 34], [212, 86, 232, 38]]) {
+      const c = v(x, y, z), at = (k, h) => c.clone().addScaledVector(sp, k * w).add(v(0, 0, h * w)).toArray();
+      b.rods([[150, 15, 126], [x, y, z - 1]], 0.4);
+      b.curve([at(-0.5, 0.05), at(-0.25, 0.22), c.toArray()], 0.7);
+      b.curve([c.toArray(), at(0.25, 0.22), at(0.5, 0.05)], 0.7);
+    }
+  } },
+
+  { name: 'Metan – molekula CH₄', build(b) {
+    b.box();
+    const C = [100, 15, 180];
+    b.rods([[100, 15, 126], [100, 15, 171]], 1.2);
+    b.ball(b.P(...C), 9);
+    const dirs = [v(0, 0, 1), ...[30, 150, 270].map(f => { const a = THREE.MathUtils.degToRad(f); return v(0.943 * Math.cos(a), 0.943 * Math.sin(a), -0.333); })];
+    for (const d of dirs) {
+      const h = v(...C).addScaledVector(d, 38);
+      b.rods([C, h.toArray()], 1.2);
+      b.ball(b.P(h.x, h.y, h.z), 6);
+    }
+  } },
+
+  { name: 'Anamorfóza – dům ze žluté tyčky', build(b) {
+    b.box();
+    const E = v(-110, -220, 165), T = v(100, 15, 178);
+    const d = T.clone().sub(E).normalize(), u = d.clone().cross(v(0, 0, 1)).normalize(), w = u.clone().cross(d);
+    const plane = ([a, c]) => T.clone().addScaledVector(u, a).addScaledVector(w, c);
+    const polys = [[[-35, -40], [35, -40], [35, 10], [0, 42], [-35, 10], [-35, -40]], [[-8, -40], [-8, -14], [8, -14], [8, -40]], [[14, -6], [26, -6], [26, 4], [14, 4], [14, -6]]];
+    const rnd = rng(5), k = () => 0.88 + rnd() * 0.27, depth = p => E.clone().add(p.clone().sub(E).multiplyScalar(k()));
+    const pieces = [];
+    for (const poly of polys) for (let i = 0; i < poly.length - 1; i++) {
+      const a = plane(poly[i]), c = plane(poly[i + 1]), n = Math.max(1, Math.ceil(a.distanceTo(c) / 16));
+      for (let j = 0; j < n; j++) pieces.push([depth(a.clone().lerp(c, j / n)), depth(a.clone().lerp(c, (j + 1) / n))]);
+    }
+    for (const [p, q] of pieces) b.rods([p.toArray(), q.toArray()], 0.7);
+    for (let i = 0; i < pieces.length; i += Math.ceil(pieces.length / 5)) {   // thin supports from the lid
+      const p = pieces[i][0];
+      b.rods([[THREE.MathUtils.clamp(p.x, 5, L - 5), 15, 126], p.toArray()], 0.35);
+    }
+    b.ball(b.P(E.x, E.y, E.z), 2.5, 'glow');
+    b.line([[E.x, E.y, 0], [E.x, E.y, E.z]]);
+    b.line(Array.from({ length: 25 }, (_, i) => [E.x + 20 * Math.cos(i * Math.PI / 12), E.y + 20 * Math.sin(i * Math.PI / 12), 0.5]));
+  } },
+
+  { name: 'Lucerna – budka napájí světlo', build(b) {
+    b.box();
+    b.curve([[190, 15, 126], [190, 15, 200], [186, 15, 222], [170, 15, 232], [148, 15, 230], [132, 15, 222], [128, 15, 211]], 1.3);
+    b.ring([128, 15, 192], 15, [0, 0, 1], 0.6);
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; b.rods([[128, 15, 210], [128 + 15 * Math.cos(a), 15 + 15 * Math.sin(a), 192]], 0.5); }
+    b.ball(b.P(128, 15, 197), 4.5, 'glow');
+  } },
+
+  { name: 'Klubko', build(b) {
+    b.box();
+    const C = [48, 15, 161], rnd = rng(3);
+    for (let i = 0; i < 9; i++) {
+      const th = rnd() * Math.PI * 2, z = rnd() * 2 - 1, s = Math.sqrt(1 - z * z);
+      b.ring(C, 33 - rnd() * 3, [s * Math.cos(th), s * Math.sin(th), z], 0.6);
+    }
+    b.curve([[74.4, 15, 141.2], [86, 10, 134], [98, 12, 130], [108, 15, 126]], 0.6);
+  } },
+
+  { name: 'Vítr', build(b) {
+    b.box();
+    for (let i = 0; i < 26; i++) {
+      const x = 6 + i * 188 / 25, y = i % 2 ? 9 : 21, h = 70 + 18 * Math.sin(i * 0.9) + 8 * Math.sin(i * 2.3);
+      b.curve([[x, y, 126], [x + 2, y, 128 + h * 0.45], [x + h * 0.22, y + 3, 128 + h * 0.8], [x + h * 0.5, y + 6, 128 + h * 0.95]], 0.6);
+    }
+  } },
+
+  { name: 'Krychle na špičce', build(b) {
+    b.box();
+    const a = 60, q = new THREE.Quaternion().setFromUnitVectors(v(1, 1, 1).normalize(), v(0, 0, 1));
+    const rz = new THREE.Quaternion().setFromAxisAngle(v(0, 0, 1), THREE.MathUtils.degToRad(20));
+    const C = cubeCorners(a / 2).map(p => p.applyQuaternion(q).applyQuaternion(rz).add(v(100, 15, BOX_H + a * Math.sqrt(3) / 2)).toArray());
+    for (const [i0, i1] of cubeEdges) b.rods([C[i0], C[i1]], 1);
+  } },
+
+  { name: 'Žebřík do ztracena', build(b) {
+    b.box();
+    const l0 = v(135, 15, 126), l1 = v(147, 26, 238), r0 = v(165, 15, 126), r1 = v(153, 26, 238);
+    b.rods([l0.toArray(), l1.toArray()], 1.1);
+    b.rods([r0.toArray(), r1.toArray()], 1.1);
+    for (const t of [0.1, 0.27, 0.43, 0.57, 0.7, 0.81, 0.9]) b.rods([l0.clone().lerp(l1, t).toArray(), r0.clone().lerp(r1, t).toArray()], 0.8);
+  } },
+
+  { name: 'Kapradina', build(b) {
+    b.box();
+    b.curve([[120, 15, 126], [118, 15, 160], [114, 13, 186], [122, 11, 206], [138, 12, 214], [150, 15, 204], [146, 17, 190], [134, 18, 192], [134, 18, 201], [141, 17, 201]], 1.2);
+    b.curve([[119, 15, 145], [106, 6, 152], [98, 2, 160]], 0.7);
+    b.curve([[119, 15, 145], [106, 26, 152], [100, 30, 160]], 0.7);
+    b.curve([[117, 14, 165], [105, 6, 172], [100, 3, 180]], 0.7);
+    b.curve([[117, 14, 165], [106, 24, 172], [101, 27, 180]], 0.7);
+    b.curve([[115, 13, 182], [109, 9, 186], [106, 8, 189]], 0.7);
+    b.curve([[115, 13, 182], [109, 18, 186], [106, 20, 189]], 0.7);
+  } },
+
+  { name: 'Původní D (pro srovnání)', build(b) {
+    b.box();
+    b.add('tube', tubeGeometry(pathFor(b.mirror)));
+    b.rect(L, L + 30, 0, 30);
+    b.rect(0, 30, BACK - 15, BACK + 15);
+  } },
+];
+
 // ---------- materials ----------
 const MATS = [
   { name: 'červená', box: '#b5121b', tube: '#b5121b', rough: 0.45 },
+  { name: 'roxor rez, budka antracit', box: '#3a3f43', tube: '#6e3519', rough: 0.95 },
   { name: 'korten', box: '#8b4524', tube: '#8b4524', rough: 0.95 },
   { name: 'korten + modřín', box: '#8b4524', tube: '#b98a57', rough: 0.85 },
   { name: 'antracit', box: '#3a3f43', tube: '#3a3f43', rough: 0.5 },
 ];
 const DISPLAYS = ['plné', 'poloprůhledné', 'drátěné'];
-const state = { mat: 0, disp: 0, mirror: false, ghost: true };
+const state = { variant: 1, mat: 0, disp: 0, mirror: false, ghost: true, bg: 0 };   // bg: 0 none, else VIEWS[bg - 1]
+
+// ---------- photos of the site, with their calibrated cameras ----------
+// cam: position (cm), yaw, pitch, roll (rad), focal length (px in a W x H image). The street camera was fitted in the
+// cabinet frame, which is shifted and turned 2.577° against the object frame.
+const VIEWS = [
+  { name: 'fotka z ulice', img: 'ulice.jpg', W: 1600, H: 1200, cam: [635.273, -395.751, 154.248, -0.556616, 0.069250, -0.027170, 1109.063], cabinet: true },
+  { name: 'fotka ze zahrady', img: 'zahrada.jpg', W: 1600, H: 2133, cam: [-50.446, 714.758, 232.096, 2.953380, -0.142060, 0.011329, 1479.094],
+    fence: { mask: 'zahrada-plot.png', dist: 335 } },   // fence and gate stand in front of the object, about 3.3 m from the camera
+];
+const RED_A = [8.08, -9.21], CAB_A = THREE.MathUtils.degToRad(2.577);
+
+function camFrame(V) {
+  const [cx, cy, cz, yaw, pitch, roll, f] = V.cam;
+  const fwd = v(Math.sin(yaw) * Math.cos(pitch), Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch));
+  let r = fwd.clone().cross(v(0, 0, 1)).normalize(), u = r.clone().cross(fwd);
+  [r, u] = [r.clone().multiplyScalar(Math.cos(roll)).addScaledVector(u, Math.sin(roll)), r.clone().multiplyScalar(-Math.sin(roll)).addScaledVector(u, Math.cos(roll))];
+  let C = v(cx, cy, cz);
+  if (V.cabinet) {   // cabinet frame -> object frame
+    const rot = new THREE.Matrix4().makeRotationZ(-CAB_A);
+    C = v(cx - RED_A[0], cy - RED_A[1], cz).applyMatrix4(rot);
+    for (const w of [fwd, r, u]) w.applyMatrix4(rot);
+  }
+  return { C, fwd, r, u, f, W: V.W, H: V.H };
+}
+const toThree = p => v(p.x / 100, p.z / 100, -p.y / 100);   // object frame cm -> site metres
 
 // ---------- scene ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -146,9 +452,9 @@ sun.position.set(-3, 6, 4);
 scene.add(sun);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.05, 100);
-camera.position.set(-3.2, 2.4, 4.2);
+camera.position.set(-1.6, 2.2, 3.6);
 const orbit = new OrbitControls(camera, renderer.domElement);
-orbit.target.set(1, 1, -0.9);
+orbit.target.set(1, 1.3, -0.3);
 orbit.update();
 
 const deskGrid = new THREE.GridHelper(10, 20, '#9a968e', '#c9c5bc');
@@ -167,32 +473,109 @@ function applyTune() {
   adj.rotation.y = THREE.MathUtils.degToRad(tune.rot);
 }
 
+// photo backdrop: the photo on a plane far behind the object, seen from the photo's camera it lines up with the model
+const backdrop = new THREE.Group();
+backdrop.rotation.x = -Math.PI / 2;
+backdrop.scale.setScalar(0.01);
+adj.add(backdrop);
+const loader = new THREE.TextureLoader(), textures = new Map();
+const texture = (url, color = true) => {
+  if (!textures.has(url)) { const t = loader.load(url); if (color) t.colorSpace = THREE.SRGBColorSpace; textures.set(url, t); }
+  return textures.get(url);
+};
+
+function photoPlane(F, D, map, alphaMap) {
+  const k = (px, py) => F.C.clone().addScaledVector(F.fwd, D).addScaledVector(F.r, D * (px - F.W / 2) / F.f).addScaledVector(F.u, -D * (py - F.H / 2) / F.f);
+  const g = new THREE.BufferGeometry().setFromPoints([k(0, 0), k(F.W, 0), k(0, F.H), k(F.W, F.H)]);
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 0, 0, 1, 0], 2));
+  g.setIndex([0, 2, 1, 1, 2, 3]);
+  return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map, alphaMap: alphaMap || null, alphaTest: alphaMap ? 0.5 : 0, side: THREE.DoubleSide, toneMapped: false }));
+}
+
+function buildBackdrop() {
+  backdrop.children.forEach(m => m.geometry.dispose());
+  backdrop.clear();
+  document.getElementById('bg').textContent = 'Pozadí: ' + (state.bg ? VIEWS[state.bg - 1].name : 'žádné');
+  if (!state.bg) return;
+  const V = VIEWS[state.bg - 1], F = camFrame(V);
+  const far = photoPlane(F, 1500, texture(V.img));
+  far.material.depthWrite = false; far.renderOrder = -1;
+  backdrop.add(far);
+  // the same photo, cut out to what stands in front of the object, so the fence covers it as it would for real
+  if (V.fence) backdrop.add(photoPlane(F, V.fence.dist, texture(V.img), texture(V.fence.mask, false)));
+}
+
+// desktop preview: look through the photo's camera, or orbit freely without a photo
+function deskView() {
+  const F = state.bg ? camFrame(VIEWS[state.bg - 1]) : null;
+  deskGrid.visible = !F;
+  orbit.enabled = !F;
+  if (F) {
+    camera.position.copy(toThree(F.C));
+    camera.up.copy(toThree(F.u));
+    camera.lookAt(toThree(F.C.clone().addScaledVector(F.fwd, 100)));
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(F.H / 2 / F.f));
+  } else {
+    camera.up.set(0, 1, 0); camera.fov = 55;
+    camera.position.set(-1.6, 2.2, 3.6);
+    orbit.target.set(1, 1.3, -0.3); orbit.update();
+  }
+  camera.updateProjectionMatrix();
+}
+
+// VR at home: put the photo's camera where the head is, looking the way the head looks
+function recenter() {
+  const F = camFrame(VIEWS[state.bg - 1]), xc = renderer.xr.getCamera();
+  const head = v(0, 0, 0).applyMatrix4(xc.matrixWorld);
+  const look = v(0, 0, -1).transformDirection(xc.matrixWorld), fw = toThree(F.fwd);
+  site.rotation.set(0, Math.atan2(-look.z, look.x) - Math.atan2(-fw.z, fw.x), 0);
+  Object.assign(tune, { x: 0, y: 0, rot: 0, h: 0 }); applyTune();
+  site.position.copy(head).sub(toThree(F.C).applyEuler(site.rotation));
+  updatePanel();
+}
+let recenterIn = 0;   // frames until recenter, the head pose is only known after a frame or two
+
+// merging needs one attribute layout, so keep only positions and normals, unindexed
+const clean = g => {
+  const n = g.index ? g.toNonIndexed() : g;
+  for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal') n.deleteAttribute(k);
+  return n;
+};
+
+const variantSel = document.getElementById('variant');
+VARIANTS.forEach((V, i) => variantSel.add(new Option(`${i + 1}. ${V.name}`, i)));
+
 function buildModel() {
+  local.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   local.clear();
   const m = MATS[state.mat], disp = state.disp;
+  const b = new Builder(state.mirror);
+  VARIANTS[state.variant].build(b);
   const mk = color => new THREE.MeshStandardMaterial({ color, roughness: m.rough, metalness: 0.05, transparent: disp === 1, opacity: disp === 1 ? 0.5 : 1, depthWrite: disp !== 1, side: THREE.DoubleSide });
-  const parts = [[boxGeometry(0, L, 0, 30, 0, BOX_H), m.box], [tubeGeometry(pathFor(state.mirror)), m.tube]];
-  for (const [g, color] of parts) {
-    if (disp === 2) local.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 25), new THREE.LineBasicMaterial({ color })));
+  for (const [kind, color] of [['box', m.box], ['tube', m.tube], ['rod', m.tube]]) {
+    if (!b.parts[kind].length) continue;
+    const g = mergeGeometries(b.parts[kind].map(clean));
+    // thin bars stay solid in the wire view, edges of a 2 cm bar would only be noise
+    if (disp === 2 && kind !== 'rod') local.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 25), new THREE.LineBasicMaterial({ color })));
     else local.add(new THREE.Mesh(g, mk(color)));
   }
-  // footprint on the ground, so it is visible where real things are in front
+  if (b.parts.glow.length) local.add(new THREE.Mesh(mergeGeometries(b.parts.glow.map(clean)), new THREE.MeshBasicMaterial({ color: '#ffc15e', side: THREE.DoubleSide })));
+  // footprint and markers on the ground, so they are visible where real things are in front
   const fp = new THREE.LineBasicMaterial({ color: '#ffd23f' });
-  const lp = state.mirror ? [L - 30, L] : [0, 30];
-  for (const b of [[0, L, 0, 30], [state.mirror ? -30 : L, state.mirror ? 0 : L + 30, 0, 30], [lp[0], lp[1], BACK - 15, BACK + 15]]) {
-    const pts = [[b[0], b[2]], [b[1], b[2]], [b[1], b[3]], [b[0], b[3]], [b[0], b[2]]].map(([x, y]) => v(x, y, 0.5));
-    local.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), fp));
-  }
+  for (const pts of b.lines) local.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), fp));
   if (state.ghost) {
     const gm = new THREE.LineBasicMaterial({ color: '#00e5ff' });
     for (const [x0, x1, y0, y1, h] of OLD) local.add(new THREE.LineSegments(new THREE.EdgesGeometry(boxGeometry(x0, x1, y0, y1, 0, h)), gm));
   }
+  variantSel.value = state.variant;
   document.getElementById('mat').textContent = 'Materiál: ' + m.name;
   document.getElementById('disp').textContent = 'Zobrazení: ' + DISPLAYS[disp];
-  document.getElementById('mirror').textContent = 'Rameno: ' + (state.mirror ? 'u elektroměru' : 'u pilíře');
+  document.getElementById('mirror').textContent = 'Zrcadlit: ' + (state.mirror ? 'ano' : 'ne');
   document.getElementById('ghost').textContent = 'Současné skříně: ' + (state.ghost ? 'zap' : 'vyp');
   updatePanel();
 }
+
+const stepVariant = d => { state.variant = (state.variant + d + VARIANTS.length) % VARIANTS.length; buildModel(); };
 
 // ---------- AR placement ----------
 let mode = 'desk';            // desk | placeA | placeB | adjust
@@ -247,27 +630,34 @@ function placePoint() {
 }
 
 // ---------- panel on the left controller ----------
-const pc = document.createElement('canvas'); pc.width = 512; pc.height = 300;
+const pc = document.createElement('canvas'); pc.width = 512; pc.height = 320;
 const ptex = new THREE.CanvasTexture(pc);
-const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.117), new THREE.MeshBasicMaterial({ map: ptex, transparent: true }));
+const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.125), new THREE.MeshBasicMaterial({ map: ptex, transparent: true }));
 panel.position.set(0, 0.07, -0.08); panel.rotation.x = -0.6; panel.visible = false;
 
 function updatePanel() {
   const g = pc.getContext('2d');
-  g.clearRect(0, 0, 512, 300);
-  g.fillStyle = 'rgba(20,20,20,.82)'; g.beginPath(); g.roundRect(0, 0, 512, 300, 24); g.fill();
-  g.fillStyle = '#fff'; g.font = 'bold 30px system-ui, sans-serif';
-  const head = { placeA: 'Bod 1: hrana dlažby u pilíře', placeB: 'Bod 2: dál po hraně k elektroměru', adjust: 'Doladění', desk: '' }[mode];
-  g.fillText(head, 22, 46);
-  g.font = '24px system-ui, sans-serif'; g.fillStyle = '#ddd';
-  const lines = mode === 'adjust' ? [
-    `posun ${tune.x.toFixed(0)} / ${tune.y.toFixed(0)} cm, výška ${tune.h.toFixed(0)} cm`,
-    `otočení ${tune.rot.toFixed(1)}°`,
-    `${MATS[state.mat].name}, ${DISPLAYS[state.disp]}, rameno ${state.mirror ? 'u elektroměru' : 'u pilíře'}`,
+  g.clearRect(0, 0, 512, 320);
+  g.fillStyle = 'rgba(20,20,20,.82)'; g.beginPath(); g.roundRect(0, 0, 512, 320, 24); g.fill();
+  g.fillStyle = '#fff'; g.font = 'bold 28px system-ui, sans-serif';
+  const head = mode === 'adjust' || mode === 'home' ? `${state.variant + 1}/${VARIANTS.length} ${VARIANTS[state.variant].name}`
+    : { placeA: 'Bod 1: hrana dlažby u pilíře', placeB: 'Bod 2: dál po hraně k elektroměru', desk: '' }[mode];
+  g.fillText(head, 22, 46, 470);
+  g.font = '23px system-ui, sans-serif'; g.fillStyle = '#ddd';
+  const lines = mode === 'home' ? [
+    `Pozadí: ${VIEWS[state.bg - 1].name}`,
+    `${MATS[state.mat].name}, ${DISPLAYS[state.disp]}${state.mirror ? ', zrcadlově' : ''}`,
+    'Spoušť P další · L předchozí varianta',
+    'Klik pravou páčkou: ulice / zahrada',
+    'Y vycentrovat · A materiál · B zobraz. · X zrcadlit',
+  ] : mode === 'adjust' ? [
+    `posun ${tune.x.toFixed(0)} / ${tune.y.toFixed(0)} cm, výška ${tune.h.toFixed(0)} cm, otočení ${tune.rot.toFixed(1)}°`,
+    `${MATS[state.mat].name}, ${DISPLAYS[state.disp]}${state.mirror ? ', zrcadlově' : ''}`,
+    'Spoušť P další · L předchozí varianta',
     'P páčka posun · L páčka otáčení/výška',
-    'A materiál · B zobrazení · X rameno · Y znovu',
-  ] : ['Zamiř pravým ovladačem na zem', 'a zmáčkni spoušť.', '', 'Y = začít znovu'];
-  lines.forEach((t, i) => g.fillText(t, 22, 96 + i * 40));
+    'A materiál · B zobrazení · X zrcadlit · Y znovu',
+  ] : ['Zamiř pravým ovladačem na zem', 'a zmáčkni spoušť.', '', 'L spoušť = předchozí varianta · Y = znovu'];
+  lines.forEach((t, i) => g.fillText(t, 22, 100 + i * 42, 470));
   ptex.needsUpdate = true;
 }
 
@@ -285,11 +675,16 @@ function handleInput(dt) {
     const src = c.userData.src;
     if (!src?.gamepad) continue;
     const gp = src.gamepad, right = src.handedness === 'right';
-    if (pressed(src, 0) && right && (mode === 'placeA' || mode === 'placeB')) placePoint();
+    if (pressed(src, 0)) {
+      if (!right) stepVariant(-1);
+      else if (mode === 'adjust' || mode === 'home') stepVariant(1);
+      else placePoint();
+    }
+    if (right && pressed(src, 3) && mode === 'home') { state.bg = state.bg === 1 ? 2 : 1; buildBackdrop(); recenterIn = 1; }
     if (right && pressed(src, 4)) { state.mat = (state.mat + 1) % MATS.length; buildModel(); }
     if (right && pressed(src, 5)) { state.disp = (state.disp + 1) % DISPLAYS.length; buildModel(); }
     if (!right && pressed(src, 4)) { state.mirror = !state.mirror; buildModel(); }
-    if (!right && pressed(src, 5)) startPlacement();
+    if (!right && pressed(src, 5)) { if (mode === 'home') recenterIn = 1; else startPlacement(); }
     if (mode !== 'adjust') continue;
     const fast = gp.buttons[1]?.pressed ? 5 : 1;
     const ax = dz(gp.axes[2] || 0), ay = dz(gp.axes[3] || 0);
@@ -301,39 +696,54 @@ function handleInput(dt) {
 }
 
 // ---------- session ----------
-const status = document.getElementById('status'), enterBtn = document.getElementById('enter');
+const status = document.getElementById('status'), enterBtn = document.getElementById('enter'), homeBtn = document.getElementById('home');
 let session = null;
+const homeSky = new THREE.Color('#c9ccce');
 
-async function enterAR() {
-  session = await navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local-floor'] });
+// outside: passthrough AR, placed by two points on the paving; at home: VR in front of the photo
+async function enterXR(home) {
+  state.bg = home ? state.bg || 1 : 0;
+  buildBackdrop();
+  session = await navigator.xr.requestSession(home ? 'immersive-vr' : 'immersive-ar', { requiredFeatures: ['local-floor'] });
   session.addEventListener('end', () => {
-    session = null; mode = 'desk'; scene.background = deskBg; deskGrid.visible = true;
+    session = null; mode = 'desk'; scene.background = deskBg;
     site.position.set(0, 0, 0); site.rotation.set(0, 0, 0); site.visible = true; markA.visible = reticle.visible = false;
     Object.assign(tune, { x: 0, y: 0, rot: 0, h: 0 }); applyTune();
     controllers.forEach(c => c.userData.ray.visible = false); panel.visible = false;
-    enterBtn.textContent = 'Spustit AR (passthrough)';
+    deskView();
   });
   await renderer.xr.setSession(session);
-  scene.background = null; deskGrid.visible = false;
-  controllers.forEach(c => c.userData.ray.visible = true);
-  const left = () => ctrl('left');
-  setTimeout(() => { const l = left(); if (l) { l.add(panel); panel.visible = true; } }, 500);
-  startPlacement();
+  scene.background = home ? homeSky : null; deskGrid.visible = false;
+  setTimeout(() => { const l = ctrl('left'); if (l) { l.add(panel); panel.visible = true; } }, 500);
+  if (home) { mode = 'home'; site.visible = true; recenterIn = 3; updatePanel(); }
+  else { controllers.forEach(c => c.userData.ray.visible = true); startPlacement(); }
 }
 
-enterBtn.onclick = () => session ? session.end() : enterAR().catch(e => status.textContent = 'AR se nepodařilo spustit: ' + e.message);
+const startXR = home => session ? session.end() : enterXR(home).catch(e => status.textContent = 'VR/AR se nepodařilo spustit: ' + e.message);
+enterBtn.onclick = () => startXR(false);
+homeBtn.onclick = () => startXR(true);
+document.getElementById('bg').onclick = () => { state.bg = (state.bg + 1) % (VIEWS.length + 1); buildBackdrop(); if (!session) deskView(); };
+variantSel.onchange = () => { state.variant = +variantSel.value; buildModel(); };
+document.getElementById('prev').onclick = () => stepVariant(-1);
+document.getElementById('next').onclick = () => stepVariant(1);
 document.getElementById('mat').onclick = () => { state.mat = (state.mat + 1) % MATS.length; buildModel(); };
 document.getElementById('disp').onclick = () => { state.disp = (state.disp + 1) % DISPLAYS.length; buildModel(); };
 document.getElementById('mirror').onclick = () => { state.mirror = !state.mirror; buildModel(); };
 document.getElementById('ghost').onclick = () => { state.ghost = !state.ghost; buildModel(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowLeft') stepVariant(-1);
+  if (e.key === 'ArrowRight') stepVariant(1);
+});
 
+const deskHelp = ' Tady je náhled – šipkami měníš variantu, tlačítkem Pozadí se díváš přes fotku, bez ní otáčíš myší.';
 if (navigator.xr) {
-  navigator.xr.isSessionSupported('immersive-ar').then(ok => {
-    enterBtn.disabled = !ok;
-    status.textContent = ok ? 'Připraveno. Na Questu klepni na „Spustit AR“. Tady na počítači je náhled – myší otáčíš.' : 'Tento prohlížeč neumí AR passthrough. Otevři stránku v prohlížeči Questu. Tady je jen náhled – myší otáčíš.';
+  Promise.all(['immersive-ar', 'immersive-vr'].map(m => navigator.xr.isSessionSupported(m).catch(() => false))).then(([ar, vr]) => {
+    enterBtn.disabled = !ar; homeBtn.disabled = !vr;
+    status.textContent = ar || vr ? 'Připraveno. Na Questu venku „AR“, doma „VR s fotkou“.' : 'Tento prohlížeč neumí AR ani VR. Otevři stránku v prohlížeči Questu.' + deskHelp;
   });
 } else {
-  status.textContent = 'Tento prohlížeč neumí WebXR. Otevři stránku v prohlížeči Questu (https). Tady je jen náhled – myší otáčíš.';
+  status.textContent = 'Tento prohlížeč neumí WebXR. Otevři stránku v prohlížeči Questu (https).' + deskHelp;
 }
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
@@ -343,12 +753,13 @@ const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1);
   if (session) {
+    if (recenterIn > 0 && --recenterIn === 0) recenter();
     handleInput(dt);
     const c = ctrl('right') || controllers[0];
     const hit = (mode === 'placeA' || mode === 'placeB') ? rayFloor(c) : null;
     reticle.visible = !!hit;
     if (hit) reticle.position.copy(hit);
-  } else orbit.update();
+  } else if (orbit.enabled) orbit.update();
   renderer.render(scene, camera);
 });
 </script>
